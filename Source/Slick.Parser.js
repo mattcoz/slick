@@ -23,14 +23,13 @@ var parse = function(expression, isReversed){
 	reversed = !!isReversed;
 	var currentCache = (reversed) ? reverseCache : cache;
 	if (currentCache[expression]) return currentCache[expression];
-	parsed = {Slick: true, expressions: [], raw: expression, reverse: function(){
+	parsed = {Slick: true, expressions: [], raw: expression, standard: true, reverse: function(){
 		return parse(this.raw, true);
 	}};
 	separatorIndex = -1;
-	var cacheKey = expression;
 	while (expression != (expression = expression.replace(regexp, parser)));
 	parsed.length = parsed.expressions.length;
-	return currentCache[cacheKey] = (reversed) ? reverse(parsed) : parsed;
+	return currentCache[parsed.raw] = (reversed) ? reverse(parsed) : parsed;
 };
 
 var reverseCombinator = function(combinator){
@@ -97,6 +96,11 @@ __END__
 	.replace(/<unicode1>/g, '(?:[:\\w\\u00a1-\\uFFFF-]|\\\\[^\\s0-9a-f])')
 );
 
+var standard = {
+	combinator: /^(?:[ >+~])$/,
+	pseudoClass: /^(?:not|link|visited|hover|active|focus|target|lang|enabled|disabled|checked|indeterminate|root|(?:nth(?:-last)?|first|last|only)-(?:child|of-type)|empty)$/
+};
+
 function parser(
 	rawMatch,
 
@@ -123,6 +127,8 @@ function parser(
 		combinatorIndex = -1;
 		if (separator) return '';
 	}
+	
+	if (combinator) parsed.standard = parsed.standard && standard.combinator.test(combinator);
 
 	if (combinator || combinatorChildren || combinatorIndex === -1){
 		combinator = combinator || ' ';
@@ -152,6 +158,8 @@ function parser(
 		});
 
 	} else if (pseudoClass){
+		parsed.standard = parsed.standard && standard.pseudoClass.test(pseudoClass);
+		
 		pseudoClassValue = pseudoClassValue || pseudoClassQuotedValue;
 		pseudoClassValue = pseudoClassValue ? pseudoClassValue.replace(reUnescape, '') : null;
 

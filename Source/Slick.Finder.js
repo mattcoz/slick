@@ -391,19 +391,26 @@ local.pushUID = function(node, tag, id, classes, attributes, pseudos){
 	}
 };
 
-local.matchNode = function(node, selector){
-	var parsed = this.Slick.parse(selector);
+local.matchNode = function(node, selector){	
+	var parsed = ((selector.Slick) ? selector : this.Slick.parse(selector));
 	if (!parsed) return true;
-
-	// simple (single) selectors
-	if(parsed.length == 1 && parsed.expressions[0].length == 1){
-		var exp = parsed.expressions[0][0];
-		return this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos);
+	
+	var expressions = parsed.expressions, reversedExpressions;
+	for (i = 0; (currentExpression = expressions[i]); i++){
+		if(currentExpression.length == 1){
+			var exp = currentExpression[0];
+			if(this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos)) return true;
+		}
 	}
-
-	var nodes = this.search(this.document, parsed);
-	for (var i = 0, item; item = nodes[i++];){
-		if (item === node) return true;
+	for (i = 0; (currentExpression = expressions[i]); i++){
+		if(currentExpression.length > 1){
+			reversedExpressions = reversedExpressions || parsed.reverse().expressions;
+			currentExpression = reversedExpressions[i];
+			var exp = currentExpression[0];
+			if(this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos)){
+				if(!!this.search(node, { Slick: true, expressions: [ currentExpression.slice(1) ] }, null, true)) return true;
+			}
+		}
 	}
 	return false;
 };
@@ -856,10 +863,18 @@ Slick.getAttribute = function(node, name){
 
 // Slick matcher
 
+var doc = document.documentElement;
+var matchesSelector = doc.matchesSelector || doc.mozMatchesSelector || doc.webkitMatchesSelector || doc.msMatchesSelector;
+var catchesException = false;
+try { matchesSelector.call(doc, ':moo'); } catch(e) { catchesException = true; }
+
 Slick.match = function(node, selector){
 	if (!(node && selector)) return false;
 	if (!selector || selector === node) return true;
 	if (typeof selector != 'string') return false;
+	if (matchesSelector) try {
+		if (catchesException || Slick.parse(selector).standard) return matchesSelector.call(node, selector);
+	} catch(e) {}
 	local.setDocument(node);
 	return local.matchNode(node, selector);
 };
