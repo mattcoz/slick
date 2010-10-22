@@ -865,7 +865,7 @@ Slick.getAttribute = function(node, name){
 
 var doc = document.documentElement;
 var matchesSelector = doc.matchesSelector || doc.mozMatchesSelector || doc.webkitMatchesSelector || doc.msMatchesSelector;
-var catchesException = false;
+var catchesException = false, throwsException = {};
 try { matchesSelector.call(doc, ':moo'); } catch(e) { catchesException = true; }
 
 Slick.match = function(node, selector){
@@ -873,8 +873,10 @@ Slick.match = function(node, selector){
 	if (!selector || selector === node) return true;
 	if (typeof selector != 'string') return false;
 	if (matchesSelector) try {
-		if (catchesException || Slick.parse(selector).standard) return matchesSelector.call(node, selector);
-	} catch(e) {}
+		if (catchesException && !(selector in throwsException) || Slick.parse(selector).standard) return matchesSelector.call(node, selector);
+	} catch(e) {
+		if (e.code == e.SYNTAX_ERR) throwsException[selector] = 1;
+	}
 	local.setDocument(node);
 	return local.matchNode(node, selector);
 };
