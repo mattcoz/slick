@@ -396,10 +396,10 @@ local.matchNode = function(node, selector){
 	if (!parsed) return true;
 
 	// simple (single) selectors
-	var expressions = parsed.expressions, reversedExpressions, simpleExpCounter = 0, i;
-	for (i = 0; (currentExpression = expressions[i]); i++){
-		if (currentExpression.length == 1){
-			var exp = currentExpression[0];
+	var expressions = parsed.expressions, currentExpression, exp, simpleExpCounter = 0, i;
+	for (i = 0; currentExpression = expressions[i++];){
+		if (currentExpression.length == 1) {
+			exp = currentExpression[0];
 			if (this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos)) return true;
 			simpleExpCounter++;
 		}
@@ -416,10 +416,15 @@ local.matchNode = function(node, selector){
 		}
 		return false;
 	}
-
-	var nodes = this.search(this.document, parsed), item;
-	for (i = 0; item = nodes[i++];){
-		if (item === node) return true;
+	
+	expressions = parsed.reverse().expressions;
+	for (i = 0; currentExpression = expressions[i++];) {
+		if (currentExpression.length > 1) {
+			exp = currentExpression[0];
+			if (this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos)) {
+				if (this.search(node, { Slick: true, expressions: [ currentExpression.slice(1) ] }, null, true)) return true;
+			}
+		}
 	}
 	return false;
 };
