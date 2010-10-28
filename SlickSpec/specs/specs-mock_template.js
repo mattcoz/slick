@@ -6,12 +6,12 @@ var specsMockTemplate = function(context){
 			var selectedArray = context.SELECT(context.document, selector);
 			var selected = context.SELECT1(context.document, selector);
 			expect( selectedArray.length ).toEqual( count );
-			if(count){
+			if (count){
 				expect( selected ).not.toBeNull();
-				expect( selected === selectedArray[0] ).toEqual(true);
-			}
-			else{
-				expect( selected == null ).toEqual(true);
+				expect( selected ).toEqual(selectedArray[0]);
+				expect( context.MATCH(selectedArray[0], selector) ).toEqual( true );
+			} else {
+				expect( selected ).toBeNull();
 			}
 			delete context.SELECT.disableQSA;
 		};
@@ -111,6 +111,8 @@ var specsMockTemplate = function(context){
 	it_should_find(1801 , 'body :not([title]):not([href^=tel:])');
 	;
 	it_should_find(59  , 'body div');
+
+/*
 	it('should not return duplicates for "* *"', function(){
 		context.SELECT.disableQSA = true;
 		
@@ -174,8 +176,7 @@ var specsMockTemplate = function(context){
 		
 		context.SELECT.disableQSA = false;
 	});
-/*
-	it['should not return duplicates for "* *" manually'] = function(){
+	it('should not return duplicates for "* *" manually', function(){
 		context.SELECT.disableQSA = true;
 		
 		var dupes = [];
@@ -208,8 +209,9 @@ var specsMockTemplate = function(context){
 		value_of( dupes.length ).should_be( 0 );
 		
 		context.SELECT.disableQSA = false;
-	};
+	});
 */
+
 	it('should not return duplicates for "div p"', function(){
 		context.SELECT.disableQSA = true;
 		
