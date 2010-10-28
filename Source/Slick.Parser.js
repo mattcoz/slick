@@ -43,8 +43,7 @@ var reverse = function(expression){
 	var expressions = expression.expressions;
 	for (var i = 0; i < expressions.length; i++){
 		var exp = expressions[i];
-		var last = {parts: [], tag: '*', combinator: reverseCombinator(exp[0].combinator)};
-
+		
 		for (var j = 0; j < exp.length; j++){
 			var cexp = exp[j];
 			if (!cexp.reverseCombinator) cexp.reverseCombinator = ' ';
@@ -52,7 +51,7 @@ var reverse = function(expression){
 			delete cexp.reverseCombinator;
 		}
 
-		exp.reverse().push(last);
+		exp.reverse();
 	}
 	return expression;
 };
