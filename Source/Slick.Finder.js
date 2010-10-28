@@ -406,6 +406,16 @@ local.matchNode = function(node, selector){
 	}
 	
 	if (simpleExpCounter == parsed.length) return false;
+	
+	var override = this.overrides[0];
+	var found = [], item;
+	var result = override.method.call(node.parentNode, selector, found, false, true);
+	if (result === true) {
+		for (i = 0; item = found[i++];){
+			if (item === node) return true;
+		}
+		return false;
+	}
 
 	var nodes = this.search(this.document, parsed), item;
 	for (i = 0; item = nodes[i++];){
@@ -730,14 +740,14 @@ local.override = function(regexp, method){
 
 var reEmptyAttribute = /\[.+[*$^]=(?:""|'')?\]/, qsaFailExpCache = {};
 
-local.override(/./, function(expression, found, first){ //querySelectorAll override
+local.override(/./, function(expression, found, first, match){ //querySelectorAll override
 
 	if (!this.querySelectorAll || !local.isHTMLDocument || local.brokenMixedCaseQSA || qsaFailExpCache[expression] ||
 	(local.brokenCheckedQSA && expression.indexOf(':checked') > -1) ||
 	(local.brokenEmptyAttributeQSA && reEmptyAttribute.test(expression)) || Slick.disableQSA) return false;
 
 	var nodes, isDocument = (this.nodeType == 9), cacheKey = expression;
-	if (!isDocument){
+	if (!match && !isDocument){
 		// non-document rooted QSA
 		// credits to Andrew Dupont
 		var currentId = this.getAttribute('id'), id = 'slick:id';
@@ -752,7 +762,7 @@ local.override(/./, function(expression, found, first){ //querySelectorAll overr
 		qsaFailExpCache[cacheKey] = 1;
 		return false;
 	} finally {
-		if (!isDocument){
+		if (!match && !isDocument){
 			if (currentId) this.setAttribute('id', currentId);
 			else this.removeAttribute('id');
 		}
