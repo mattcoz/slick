@@ -407,7 +407,7 @@ local.pushUID = function(node, tag, id, classes, attributes, pseudos){
 var reNthChild = /:nth-child/, matchesFailExpCache = {};
 
 local.matchNode = function(node, selector){
-	if (this.matchesSelector && this.matchesThrowsException && !(this.brokenNthChildMS && reNthChild.test(selector))) try {
+	if (this.matchesSelector && this.matchesThrowsException && !matchesFailExpCache[selector] && !(this.brokenNthChildMS && reNthChild.test(selector))) try {
 		return this.matchesSelector.call(node, selector);
 	} catch(e) {
 		if (e.code == e.SYNTAX_ERR) matchesFailExpCache[selector] = 1;
