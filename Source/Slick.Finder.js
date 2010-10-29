@@ -47,6 +47,8 @@ local.setDocument = function(document){
 	= this.brokenCheckedQSA
 	= this.brokenEmptyAttributeQSA
 	= this.isHTMLDocument
+	= this.matchesSelector
+	= this.brokenNthChildMS
 	= false;
 
 	var starSelectsClosed, starSelectsComments,
@@ -125,6 +127,17 @@ local.setDocument = function(document){
 		try {
 			testNode.innerHTML = '<a class=""></a>';
 			this.brokenEmptyAttributeQSA = (testNode.querySelectorAll('[class*=""]').length != 0);
+		} catch(e){};
+		
+		// Native matchesSelector API
+		this.matchesSelector = root.matchesSelector || root.mozMatchesSelector || root.webkitMatchesSelector || root.msMatchesSelector;
+		this.matchesThrowsException = false;
+		try { this.matchesSelector.call(root, ':slick'); } catch(e) { this.matchesThrowsException = true; }
+		
+		// Webkit has buggy nth-child matching
+		try {
+			testNode.innerHTML = '<p></p><p></p>';
+			this.brokenNthChildMS = !(this.matchesSelector.call(root.querySelector('p:nth-child(2n)'), ':nth-child(2n)'));
 		} catch(e){};
 		
 	}
@@ -391,7 +404,15 @@ local.pushUID = function(node, tag, id, classes, attributes, pseudos){
 	}
 };
 
+var reNthChild = /:nth-child/, matchesFailExpCache = {};
+
 local.matchNode = function(node, selector){
+	if (this.matchesSelector && this.matchesThrowsException && !(this.brokenNthChildMS && reNthChild.test(selector))) try {
+		return this.matchesSelector.call(node, selector);
+	} catch(e) {
+		if (e.code == e.SYNTAX_ERR) matchesFailExpCache[selector] = 1;
+	}
+
 	var parsed = this.Slick.parse(selector);
 	if (!parsed) return true;
 
