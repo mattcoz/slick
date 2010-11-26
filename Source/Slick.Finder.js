@@ -739,6 +739,10 @@ local.attributeGetters = {
 
 	'style': function(){
 		return (this.style) ? this.style.cssText : this.getAttribute('style');
+	},
+
+	'type': function(){
+		return this.getAttribute('type');
 	}
 
 };
