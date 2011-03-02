@@ -550,22 +550,30 @@ local.matchNode = function(node, selector){
 	if (!parsed) return true;
 
 	// simple (single) selectors
-	var expressions = parsed.expressions, reversedExpressions, simpleExpCounter = 0, i;
-	for (i = 0; (currentExpression = expressions[i]); i++){
-		if (currentExpression.length == 1){
-			var exp = currentExpression[0];
-			if (this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos)) return true;
+	var expressions = parsed.expressions, currentExpression, exp, simpleExpCounter = 0, i;
+	for (i = 0; currentExpression = expressions[i++];){
+		if (currentExpression.length == 1) {
+			exp = currentExpression[0];
+			if (this.matchExp(node, exp)) return true;
 			simpleExpCounter++;
 		}
 	}
-
+	
 	if (simpleExpCounter == parsed.length) return false;
-
-	var nodes = this.search(this.document, parsed), item;
-	for (i = 0; item = nodes[i++];){
-		if (item === node) return true;
+	
+	// complex selectors
+	expressions = parsed.reverse().expressions;
+	for (i = 0; currentExpression = expressions[i++];) {
+		if (currentExpression.length > 1) {
+			exp = currentExpression[0];
+			if (this.matchExp(node, exp) && this.search(node, { Slick: true, expressions: [ currentExpression.slice(1) ] }, null, true)) return true;
+		}
 	}
 	return false;
+};
+
+local.matchExp = function(node, exp){
+	return this.matchSelector(node, (this.isXMLDocument) ? exp.tag : exp.tag.toUpperCase(), exp.id, exp.classes, exp.attributes, exp.pseudos);
 };
 
 local.matchPseudo = function(node, name, argument){
